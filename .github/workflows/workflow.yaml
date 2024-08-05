@@ -18,13 +18,16 @@ jobs:
           role-to-assume: arn:aws:iam::356853385214:role/github-actions-broodx-frontend
           role-session-name: samplerolesession
           aws-region: us-west-2
-      - name: prepare ECR repo name based on the Github repository
-        shell: bash
-        run: |
-          set -eux
-          # lowercase the name
-          repo="${GITHUB_REPOSITORY,,}"
 
-          # replace / with _
-          echo "ECR_REPO_NAME=${repo//\//_}" >> $GITHUB_ENV
-        working-directory: ${{ github.action_path }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: broodx
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
