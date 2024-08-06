@@ -28,9 +28,11 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: broodx
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+        script:
+          - imageExists=`aws ecr list-images --repository-name $REPOSITORY --query "imageIds[?imageTag=='$IMAGE_TAG'].imageTag" --output text`
+          - if [ -n "$imageExists" ]; then exit 0; fi
+          - docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          - docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - uses: azure/setup-kubectl@v4
         with:
