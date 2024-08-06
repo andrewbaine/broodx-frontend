@@ -34,7 +34,7 @@ jobs:
 
       - uses: azure/setup-kubectl@v4
         with:
-          version: "1.30.3"
+          version: "v1.30.3"
 
       - name: Update Kubeconfig
         run: |
