@@ -29,8 +29,7 @@ jobs:
           REPOSITORY: broodx
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          imageExists=`aws ecr list-images --repository-name $REPOSITORY --query "imageIds[?imageTag=='$IMAGE_TAG'].imageTag" --output text`
-          if [ -z "$imageExists" ]
+          if [ -z $(aws ecr list-images --repository-name $REPOSITORY --query "imageIds[?imageTag==\"$IMAGE_TAG\"].imageTag" --output text) ]
           then
             docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
             docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
