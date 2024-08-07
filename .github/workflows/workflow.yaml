@@ -30,13 +30,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           REGION: us-west-2
         run: |
-          aws ecr describe-images \
-            --repository-name $REPOSITORY \
-            --region $REGION \
-            --filter tagStatus=TAGGED \
-            --image-ids=imageTag=$IMAGE_TAG || \
-            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
+          bash -c "aws ecr describe-images --repository-name $REPOSITORY --region $REGION --filter tagStatus=TAGGED --image-ids=imageTag=$IMAGE_TAG || docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG"
       - uses: azure/setup-kubectl@v4
         with:
           version: "v1.30.3"
