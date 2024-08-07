@@ -29,11 +29,12 @@ jobs:
           REPOSITORY: broodx
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          if [ -z $(aws ecr list-images --regiou us-west-2 --repository-name $REPOSITORY --query "imageIds[?imageTag==\"$IMAGE_TAG\"].imageTag" --output text) ]
-          then
-            docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          fi
+          aws ecr describe-images \
+            --repository-name $REPOSITORY \
+            --region $REGION \
+            --filter tagStatus=TAGGED \
+            --image-ids=imageTag=$IMAGE_TAG || \
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - uses: azure/setup-kubectl@v4
         with:
