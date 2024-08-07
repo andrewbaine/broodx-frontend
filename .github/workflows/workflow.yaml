@@ -35,7 +35,7 @@ jobs:
             --region $REGION \
             --filter tagStatus=TAGGED \
             --image-ids=imageTag=$IMAGE_TAG || \
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - uses: azure/setup-kubectl@v4
         with:
