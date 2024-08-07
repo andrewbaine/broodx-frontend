@@ -12,7 +12,16 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.30.3"
+
+      - uses: azure/setup-helm@v4.2.0
+        with:
+          version: "3.15.3"
+
       - uses: actions/checkout@v4
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::356853385214:role/github-actions-broodx-frontend
@@ -23,27 +32,32 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Check if image already pushed
+        id: check-image-already-pushed
+        env:
+          REPOSITORY: broodx
+          IMAGE_TAG: ${{ github.sha }}
+          REGION: us-west-2
+        run: |
+          aws ecr describe-images --repository-name $REPOSITORY --region $REGION --filter tagStatus=TAGGED --image-ids=imageTag=$IMAGE_TAG
+        continue-on-error: true
+
       - name: Build, tag, and push docker image to Amazon ECR
+        if: ${{ steps.check-image-already-pushed.outcome == 'failure' }}
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: broodx
           IMAGE_TAG: ${{ github.sha }}
           REGION: us-west-2
         run: |
-          bash -c "aws ecr describe-images --repository-name $REPOSITORY --region $REGION --filter tagStatus=TAGGED --image-ids=imageTag=$IMAGE_TAG || docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG"
-      - uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.30.3"
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Update Kubeconfig
+        id: update-kubeconfig
         env:
           REGION: us-west-2
         run: |
           aws eks update-kubeconfig --name broodx-staging --region $REGION
-
-      - uses: azure/setup-helm@v4.2.0
-        with:
-          version: "3.15.3"
 
       - name: Helm Upgrade
         run: |
