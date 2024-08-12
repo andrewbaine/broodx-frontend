@@ -1,5 +1,5 @@
 image:
-  tag: 6d3f69949a402a0c034c443d14e82901628304e2
+  tag: bc22dc4e0c8fcff9b34e5ce33d087745e2af0170
 service:
   port: 3001
 ingress:
