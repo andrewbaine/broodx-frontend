@@ -3,6 +3,8 @@ image:
 service:
   port: 3001
 ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging-2"
   enabled: true
   className: "nginx"
   hosts:
@@ -10,3 +12,7 @@ ingress:
       paths:
         - pathType: "Prefix"
           path: "/"
+tls:
+  hosts:
+    - "www-staging.broodx.com"
+  secretName:
