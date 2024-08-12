@@ -14,7 +14,7 @@ spec:
 apiVersion: postgresql.cnpg.io/v1
 kind: Pooler
 metadata:
-  name: pooler-{{ include "chart.fullname" . }}
+  name: pooler-{{ include "chart.fullname" . }}-rw
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 spec:

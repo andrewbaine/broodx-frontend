@@ -93,3 +93,5 @@ app.use(function (err, req, res, next) {
 });
 
 module.exports = app;
+
+console.log("PGHOST", process.env.PGHOST);
