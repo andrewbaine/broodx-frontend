@@ -1,2 +1,4 @@
 image:
   tag: 9a06a6e62e810ba91c957b41985c4b04ff448723
+service:
+  port: 3001

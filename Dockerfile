@@ -19,6 +19,7 @@ COPY views /app/views
 
 COPY app.js /app/
 
-EXPOSE 3000
+EXPOSE 3001
 
+ENV PORT 3001
 CMD ["node", "bin/www"]
