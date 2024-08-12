@@ -24,9 +24,9 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/login", (_, res) => res.render("login"));
 
-var LocalStrategy = require("passport-local");
+let LocalStrategy = require("passport-local");
 
-var strategy = new LocalStrategy(function verify(username, password, cb) {
+let strategy = new LocalStrategy(function verify(username, password, cb) {
   db.get(
     "SELECT * FROM users WHERE username = ?",
     [username],
@@ -60,7 +60,7 @@ var strategy = new LocalStrategy(function verify(username, password, cb) {
   );
 });
 
-app.use(strategy);
+passport.use(strategy);
 
 app.post(
   "/login/password",
