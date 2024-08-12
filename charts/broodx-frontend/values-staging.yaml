@@ -12,7 +12,7 @@ ingress:
       paths:
         - pathType: "Prefix"
           path: "/"
-tls:
-  hosts:
-    - "www-staging.broodx.com"
-  secretName:
+  tls:
+    hosts:
+      - "www-staging.broodx.com"
+    secretName: "broodx-frontend-tls"
