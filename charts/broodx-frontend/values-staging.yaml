@@ -7,5 +7,6 @@ ingress:
   className: "nginx"
   hosts:
     - host: "www-staging.broodx.com"
-      pathType: "Prefix"
-      path: "/"
+      paths:
+        - pathType: "Prefix"
+          path: "/"
