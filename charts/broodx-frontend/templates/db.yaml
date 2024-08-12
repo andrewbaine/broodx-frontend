@@ -1,8 +1,9 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: { { include "chart.fullname" . } }
-  labels: { { - include "chart.labels" . | nindent 4 } }
+  name: {{ include "chart.fullname" . }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
 spec:
   instances: 3
   storage:
