@@ -21,6 +21,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/login', (_, res) => res.render('login'))
 
+app.post('/login/password',
+  passport.authenticate('local', { failureRedirect: '/login', failureMessage: true }),
+  function(req, res) {
+    res.redirect('/dashboard');
+  });
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
