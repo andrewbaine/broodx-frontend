@@ -2,3 +2,11 @@ image:
   tag: 1a4276570610d1fbcfda3c58e05812fade316de0
 service:
   port: 3001
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: "www-staging.broodx.com"
+      pathType: "Prefix"
+      path: "/"
