@@ -32,16 +32,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Check if image already pushed
-        id: check-image-already-pushed
-        env:
-          REPOSITORY: broodx
-          IMAGE_TAG: ${{ github.sha }}
-          REGION: us-west-2
-        run: |
-          aws ecr describe-images --repository-name $REPOSITORY --region $REGION --filter tagStatus=TAGGED --image-ids=imageTag=$IMAGE_TAG
-        continue-on-error: true
-
       - name: Build, tag, and push docker image to Amazon ECR
         if: ${{ steps.check-image-already-pushed.outcome == 'failure' }}
         env:
@@ -53,13 +43,11 @@ jobs:
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-      - name: Update Kubeconfig
-        id: update-kubeconfig
-        env:
-          REGION: us-west-2
+      - name: Update values.yaml
         run: |
-          aws eks update-kubeconfig --name broodx-staging --region $REGION
-
-      - name: Helm Upgrade
-        run: |
-          helm upgrade -i --create-namespace -n broodx frontend ./chart
+          yq -i -e 'image.tag = "${{github.sha }}"' charts/broodx-frontend/values-staging.yaml
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add charts/broodx-frontend/values-staging.yaml
+          git commit -m "Update staging image
+          git push
