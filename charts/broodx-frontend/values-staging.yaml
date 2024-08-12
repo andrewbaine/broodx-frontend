@@ -1,8 +1,7 @@
 image:
-  tag: 1a4276570610d1fbcfda3c58e05812fade316de0
+  tag: d6b3528511ebf82c22c12f3f0695eaa0a0ae5ad1
 service:
   port: 3001
-
 ingress:
   enabled: true
   className: "nginx"
