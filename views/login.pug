@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{ title }
+  form(action="/login/password", method="post")
+    div
+      label(for="username") Username
+      input#username(name="username", type="text", required)
+    div
+      label(for="password") Password
+      input#password(name="password", type="password", required)
+    div
+      button(type="submit") Sign in
