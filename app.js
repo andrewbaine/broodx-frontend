@@ -12,10 +12,14 @@ let usersRouter = require("./routes/users");
 
 let LocalStrategy = require("passport-local");
 
-const bcrypt = require("bcrypt");
+let bcrypt = require("bcrypt");
+let pg = require("pg");
+
+let bodyParser = require("body-parser");
+let urlencoded = bodyParser.urlencoded({ extended: false });
+
 const saltRounds = 10;
 
-let pg = require("pg");
 let pool = new pg.Pool();
 
 let strategy = new LocalStrategy(function verify(email, password, cb) {
@@ -95,10 +99,19 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/login", (_, res) => res.render("login"));
-app.get("/register", (_, res) => res.render("register"));
+app.post(
+  "/login",
+  urlencoded,
+  passport.authenticate("local", {
+    failureRedirect: "/login-retry",
+    failureMessage: true,
+  }),
+  function (req, res) {
+    res.redirect("/dashboard");
+  },
+);
 
-let bodyParser = require("body-parser");
-let urlencoded = bodyParser.urlencoded({ extended: false });
+app.get("/register", (_, res) => res.render("register"));
 
 app.post("/register", urlencoded, (req, res, next) => {
   let { username, password } = req.body;
@@ -134,18 +147,6 @@ app.get("/ready", (req, res, next) => {
     res.sendStatus(200);
   });
 });
-
-app.post(
-  "/login",
-  urlencoded,
-  passport.authenticate("local", {
-    failureRedirect: "/login-retry",
-    failureMessage: true,
-  }),
-  function (req, res) {
-    res.redirect("/dashboard");
-  },
-);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
