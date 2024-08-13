@@ -97,11 +97,15 @@ module.exports = app;
 console.log("PGHOST", process.env.PGHOST);
 
 let pg = require("pg");
+let pool = new pg.Pool();
 const client = new pg.Client();
-client.connect((err) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log("connected!");
+
+app.get("/ready", (req, res, next) => {
+  pool.query("SELECT now()", (err, result) => {
+    if (err) {
+      return next(err);
+    }
+    console.log(result);
+    res.sendStatus(200);
+  });
 });
