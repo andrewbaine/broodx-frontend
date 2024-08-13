@@ -24,7 +24,7 @@ spec:
       name: {{ .Release.Name }}-schema
   credentials:
     scheme: postgres
-    host: pooler-broodx-frontend-rw
+    host: pooler-broodx-frontend-rw.broodx.svc.cluster.local
     userFrom:
       secretKeyRef:
         name: broodx-frontend-postgres-app
