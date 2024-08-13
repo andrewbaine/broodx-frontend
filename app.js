@@ -136,7 +136,8 @@ app.get("/ready", (req, res, next) => {
 });
 
 app.post(
-  "/login/password",
+  "/login",
+  urlencoded,
   passport.authenticate("local", {
     failureRedirect: "/login-retry",
     failureMessage: true,
