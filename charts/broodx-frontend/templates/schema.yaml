@@ -22,3 +22,18 @@ spec:
     configMapKeyRef:
       key: schema.sql
       name: {{ .Release.Name }}-schema
+  credentials:
+    scheme: postgres
+    host: pooler-broodx-frontend-rw
+    userFrom:
+      secretKeyRef:
+        name: broodx-frontend-postgres-app
+        key: user
+    passwordFrom:
+      secretKeyRef:
+        name: broodx-frontend-postgres-app
+        key: password
+    database: app
+    port: 5432
+#    parameters:
+#      sslmode: disable
