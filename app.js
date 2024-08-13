@@ -105,7 +105,7 @@ app.post("/register", (req, res, next) => {
       pool,
       (client, cb) => {
         client.query(
-          "INSERT INTO users(email, hashed_password) VALUES (?, ?, ?)",
+          "INSERT INTO users(email, hashed_password) VALUES ($1, $2)",
           [req.username, hash],
           cb,
         );
