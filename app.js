@@ -96,7 +96,11 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/login", (_, res) => res.render("login"));
 app.get("/register", (_, res) => res.render("register"));
-app.post("/register", (req, res, next) => {
+
+let bodyParser = require("body-parser");
+let urlencoded = bodyParser.urlencoded({ extended: false });
+
+app.post("/register", urlencoded, (req, res, next) => {
   bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
     if (err) {
       return next(err);
