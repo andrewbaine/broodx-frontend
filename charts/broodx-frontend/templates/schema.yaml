@@ -2,26 +2,25 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-schema
+  name: {{ .Release.Name }}-migrations
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 data:
-  schema.sql: |-
-{{ .Files.Get "schema.sql" | indent 4}}
+{{ (.Files.Glob "migrations/*").AsConfig | indent 2 }}
 
 ---
 
+
 apiVersion: db.atlasgo.io/v1alpha1
-kind: AtlasSchema
+kind: AtlasMigration
 metadata:
-  name: {{ .Release.Name }}-atlas-schema
+  name: {{ .Release.Name }}-atlas-migration
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
-  schema:
-    configMapKeyRef:
-      key: schema.sql
-      name: {{ .Release.Name }}-schema
+  dir:
+    configMapRef:
+      name: {{ .Release.Name }}-migrations
   credentials:
     scheme: postgres
     host: pooler-broodx-frontend-rw.broodx.svc.cluster.local
