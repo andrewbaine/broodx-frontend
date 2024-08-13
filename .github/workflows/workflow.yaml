@@ -20,7 +20,12 @@ jobs:
         with:
           version: "3.15.3"
 
+      - uses: ariga/setup-atlas
+
       - uses: actions/checkout@v4
+
+      - name: Validate migrations
+        run: atlas migrate validate
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -41,6 +46,11 @@ jobs:
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      - name: Update migrations
+        run: |
+          rm -rf charts/broodx-frontend/migrations
+          cp -r ./migrations charts/broodx-frontend/migrations
 
       - name: Update values.yaml
         run: |
