@@ -63,6 +63,11 @@ spec:
                   key: password
             - name: PGHOST
               value: pooler-broodx-frontend-rw
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: broodx-frontend-db-app
+                  key: dbname
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}

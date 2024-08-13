@@ -95,3 +95,13 @@ app.use(function (err, req, res, next) {
 module.exports = app;
 
 console.log("PGHOST", process.env.PGHOST);
+
+let pg = require("pg");
+const client = new pg.Client();
+client.connect((err) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  console.log("connected!");
+});
