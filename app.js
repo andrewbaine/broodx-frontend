@@ -76,6 +76,16 @@ app.post(
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
+app.get("/ready", (req, res, next) => {
+  pool.query("SELECT now()", (err, result) => {
+    if (err) {
+      return next(err);
+    }
+    console.log(result);
+    res.sendStatus(200);
+  });
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -99,13 +109,3 @@ console.log("PGHOST", process.env.PGHOST);
 let pg = require("pg");
 let pool = new pg.Pool();
 const client = new pg.Client();
-
-app.get("/ready", (req, res, next) => {
-  pool.query("SELECT now()", (err, result) => {
-    if (err) {
-      return next(err);
-    }
-    console.log(result);
-    res.sendStatus(200);
-  });
-});
