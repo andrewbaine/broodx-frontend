@@ -121,7 +121,6 @@ app.get("/ready", (req, res, next) => {
     if (err) {
       return next(err);
     }
-    console.log(result);
     res.sendStatus(200);
   });
 });
@@ -156,8 +155,6 @@ app.use(function (err, req, res, next) {
 });
 
 module.exports = app;
-
-console.log("PGHOST", process.env.PGHOST);
 
 let pg = require("pg");
 let pool = new pg.Pool();
