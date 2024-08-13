@@ -9,6 +9,7 @@ spec:
   storage:
     size: 1Gi
     storageClass: gp2
+  startDelay: 3500
 
 ---
 
@@ -26,5 +27,5 @@ spec:
   pgbouncer:
     poolMode: session
     parameters:
-      max_client_conn: "1000"
+      max_client_conn: "999"
       default_pool_size: "10"
