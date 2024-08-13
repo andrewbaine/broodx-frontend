@@ -10,9 +10,78 @@ let logger = require("morgan");
 let indexRouter = require("./routes/index");
 let usersRouter = require("./routes/users");
 
-let app = express();
+let LocalStrategy = require("passport-local");
 
-// view engine setup
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+let strategy = new LocalStrategy(function verify(email, password, cb) {
+  pool.query(
+    "SELECT id, hashed_password FROM users WHERE email = ?",
+    [email],
+    function (err, result) {
+      if (err) {
+        return cb(err);
+      }
+      let rows = result.rows;
+      if (rows.length === 0) {
+        return cb(null, false, { message: "Incorrect email or password." });
+      }
+      if (rows.length === 1) {
+        let user = rows[0];
+        bcrypt.compare(password, user.hashed_password, (err, authenticated) => {
+          if (err) {
+            return cb(err);
+          }
+          if (!authenticated) {
+            return cb(null, false, {
+              message: "Incorrect email or password.",
+            });
+          }
+          return cb(null, user.id);
+        });
+      }
+      return cb(
+        new Error("impossible to have more than one row in the database."),
+      );
+    },
+  );
+});
+
+passport.use(strategy);
+const async = require("async");
+let transaction = (pool, f, cb) => {
+  pool.connect((err, client) => {
+    if (err) {
+      return cb(err);
+    }
+    let c = (err) =>
+      client.query("ROLLBACK", (e2) => {
+        client.release();
+        cb(e2 || err);
+      });
+
+    client.query("BEGIN", (err) => {
+      if (err) {
+        return c(err);
+      }
+      return f(client, (err, result) => {
+        if (err) {
+          return c(err);
+        }
+        client.query("COMMIT", (err) => {
+          if (err) {
+            return c(err);
+          }
+          client.release();
+          return cb(err, result);
+        });
+      });
+    });
+  });
+};
+
+let app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
@@ -23,59 +92,30 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/login", (_, res) => res.render("login"));
-
-let LocalStrategy = require("passport-local");
-
-let strategy = new LocalStrategy(function verify(username, password, cb) {
-  db.get(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    function (err, user) {
-      if (err) {
-        return cb(err);
-      }
-      if (!user) {
-        return cb(null, false, { message: "Incorrect username or password." });
-      }
-
-      crypto.pbkdf2(
-        password,
-        user.salt,
-        310000,
-        32,
-        "sha256",
-        function (err, hashedPassword) {
-          if (err) {
-            return cb(err);
-          }
-          if (!crypto.timingSafeEqual(user.hashed_password, hashedPassword)) {
-            return cb(null, false, {
-              message: "Incorrect username or password.",
-            });
-          }
-          return cb(null, user);
-        },
-      );
-    },
-  );
+app.get("/register", (_, res) => res.render("register"));
+app.post("/register", (req, res, next) => {
+  bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+    if (err) {
+      return next(err);
+    }
+    transaction(
+      (client, cb) => {
+        client.query(
+          "INSERT INTO users(email, hashed_password) VALUES (?, ?, ?)",
+          [req.username, hash],
+          cb,
+        );
+      },
+      (err, x) => {
+        if (err) {
+          return next(err);
+        }
+        console.log("user id is", x);
+        return res.redirect("/login");
+      },
+    );
+  });
 });
-
-passport.use(strategy);
-
-app.post(
-  "/login/password",
-  passport.authenticate("local", {
-    failureRedirect: "/login",
-    failureMessage: true,
-  }),
-  function (req, res) {
-    res.redirect("/dashboard");
-  },
-);
-
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
-
 app.get("/ready", (req, res, next) => {
   pool.query("SELECT now()", (err, result) => {
     if (err) {
@@ -85,6 +125,20 @@ app.get("/ready", (req, res, next) => {
     res.sendStatus(200);
   });
 });
+
+app.post(
+  "/login/password",
+  passport.authenticate("local", {
+    failureRedirect: "/login-retry",
+    failureMessage: true,
+  }),
+  function (req, res) {
+    res.redirect("/dashboard");
+  },
+);
+
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));
