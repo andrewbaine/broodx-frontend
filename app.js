@@ -15,6 +15,9 @@ let LocalStrategy = require("passport-local");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
+let pg = require("pg");
+let pool = new pg.Pool();
+
 let strategy = new LocalStrategy(function verify(email, password, cb) {
   pool.query(
     "SELECT id, hashed_password FROM users WHERE email = ?",
@@ -99,6 +102,7 @@ app.post("/register", (req, res, next) => {
       return next(err);
     }
     transaction(
+      pool,
       (client, cb) => {
         client.query(
           "INSERT INTO users(email, hashed_password) VALUES (?, ?, ?)",
@@ -155,7 +159,3 @@ app.use(function (err, req, res, next) {
 });
 
 module.exports = app;
-
-let pg = require("pg");
-let pool = new pg.Pool();
-const client = new pg.Client();
