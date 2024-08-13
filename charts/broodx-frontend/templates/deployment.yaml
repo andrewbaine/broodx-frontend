@@ -54,19 +54,19 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: broodx-frontend-db-app
+                  name: broodx-frontend-postgres-app
                   key: user
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: broodx-frontend-db-app
+                  name: broodx-frontend-postgres-app
                   key: password
             - name: PGHOST
               value: pooler-broodx-frontend-rw
             - name: PGDATABASE
               valueFrom:
                 secretKeyRef:
-                  name: broodx-frontend-db-app
+                  name: broodx-frontend-postgres-app
                   key: dbname
       {{- with .Values.volumes }}
       volumes:
