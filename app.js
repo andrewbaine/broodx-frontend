@@ -101,7 +101,9 @@ let bodyParser = require("body-parser");
 let urlencoded = bodyParser.urlencoded({ extended: false });
 
 app.post("/register", urlencoded, (req, res, next) => {
-  bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+  let { username, password } = req.body;
+  console.log("todo: validate username and password");
+  bcrypt.hash(password, saltRounds, (err, hash) => {
     if (err) {
       return next(err);
     }
@@ -110,7 +112,7 @@ app.post("/register", urlencoded, (req, res, next) => {
       (client, cb) => {
         client.query(
           "INSERT INTO users(email, hashed_password) VALUES ($1, $2)",
-          [req.username, hash],
+          [username, hash],
           cb,
         );
       },
@@ -153,6 +155,7 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
+  console.log(err);
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
