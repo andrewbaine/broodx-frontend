@@ -31,26 +31,31 @@ let strategy = new LocalStrategy(function verify(email, password, cb) {
         return cb(err);
       }
       let rows = result.rows;
+
       if (rows.length === 0) {
         return cb(null, false, { message: "Incorrect email or password." });
-      }
-      if (rows.length === 1) {
+      } else if (rows.length === 1) {
         let user = rows[0];
-        bcrypt.compare(password, user.hashed_password, (err, authenticated) => {
-          if (err) {
-            return cb(err);
-          }
-          if (!authenticated) {
-            return cb(null, false, {
-              message: "Incorrect email or password.",
-            });
-          }
-          return cb(null, user.id);
-        });
+        return bcrypt.compare(
+          password,
+          user.hashed_password,
+          (err, authenticated) => {
+            if (err) {
+              return cb(err);
+            }
+            if (!authenticated) {
+              return cb(null, false, {
+                message: "Incorrect email or password.",
+              });
+            }
+            return cb(null, user.id);
+          },
+        );
+      } else {
+        return cb(
+          new Error("impossible to have more than one row in the database."),
+        );
       }
-      return cb(
-        new Error("impossible to have more than one row in the database."),
-      );
     },
   );
 });
