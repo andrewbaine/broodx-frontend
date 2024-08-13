@@ -24,7 +24,7 @@ let pool = new pg.Pool();
 
 let strategy = new LocalStrategy(function verify(email, password, cb) {
   pool.query(
-    "SELECT id, hashed_password FROM users WHERE email = ?",
+    "SELECT id, hashed_password FROM users WHERE email = $1",
     [email],
     function (err, result) {
       if (err) {
