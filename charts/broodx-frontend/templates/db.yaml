@@ -1,7 +1,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: {{ include "chart.fullname" . }}-db
+  name: {{ include "chart.fullname" . }}-postgres
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
@@ -21,7 +21,7 @@ metadata:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
   cluster:
-    name: {{ include "chart.fullname" . }}-db
+    name: {{ include "chart.fullname" . }}-postgres
   instances: 3
   type: rw
   pgbouncer:
