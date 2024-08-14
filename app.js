@@ -1,149 +1,65 @@
-let crypto = require("crypto");
-let passport = require("passport");
 let createError = require("http-errors");
 let express = require("express");
-
 let path = require("path");
 let cookieParser = require("cookie-parser");
+let session = require("express-session");
+let csrf = require("csurf");
+let passport = require("passport");
 let logger = require("morgan");
 
-let indexRouter = require("./routes/index");
-let usersRouter = require("./routes/users");
+const RedisStore = require("connect-redis").default;
+const redis = require("redis");
 
-let LocalStrategy = require("passport-local");
-
-let bcrypt = require("bcrypt");
-let pg = require("pg");
-
-let bodyParser = require("body-parser");
-let urlencoded = bodyParser.urlencoded({ extended: false });
-
-const saltRounds = 10;
-
-let pool = new pg.Pool();
-
-let strategy = new LocalStrategy(function verify(email, password, cb) {
-  pool.query(
-    "SELECT id, hashed_password FROM users WHERE email = $1",
-    [email],
-    function (err, result) {
-      if (err) {
-        return cb(err);
-      }
-      let rows = result.rows;
-
-      if (rows.length === 0) {
-        return cb(null, false, { message: "Incorrect email or password." });
-      } else if (rows.length === 1) {
-        let user = rows[0];
-        return bcrypt.compare(
-          password,
-          user.hashed_password,
-          (err, authenticated) => {
-            if (err) {
-              return cb(err);
-            }
-            if (!authenticated) {
-              return cb(null, false, {
-                message: "Incorrect email or password.",
-              });
-            }
-            return cb(null, user.id);
-          },
-        );
-      } else {
-        return cb(
-          new Error("impossible to have more than one row in the database."),
-        );
-      }
-    },
-  );
+// Initialize client.
+let redisClient = redis.createClient();
+redisClient.connect().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
 
-passport.use(strategy);
-const async = require("async");
-let transaction = (pool, f, cb) => {
-  pool.connect((err, client) => {
-    if (err) {
-      return cb(err);
-    }
-    let c = (err) =>
-      client.query("ROLLBACK", (e2) => {
-        client.release();
-        cb(e2 || err);
-      });
+// Initialize store.
+let redisStore = new RedisStore({
+  client: redisClient,
+  prefix: "myapp:",
+});
 
-    client.query("BEGIN", (err) => {
-      if (err) {
-        return c(err);
-      }
-      return f(client, (err, result) => {
-        if (err) {
-          return c(err);
-        }
-        client.query("COMMIT", (err) => {
-          if (err) {
-            return c(err);
-          }
-          client.release();
-          return cb(err, result);
-        });
-      });
-    });
-  });
-};
-
+var indexRouter = require("./routes/index");
+var authRouter = require("./routes/auth");
 let app = express();
+
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
-
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(logger(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/login", (_, res) => res.render("login"));
-app.post(
-  "/login",
-  urlencoded,
-  passport.authenticate("local", {
-    failureRedirect: "/login-retry",
-    failureMessage: true,
+app.use(
+  session({
+    store: redisStore,
+    resave: false, // required: force lightweight session keep alive (touch)
+    saveUninitialized: false, // recommended: only save session when data exists
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      secure: true,
+    },
   }),
-  function (req, res) {
-    res.redirect("/dashboard");
-  },
 );
-
-app.get("/register", (_, res) => res.render("register"));
-
-app.post("/register", urlencoded, (req, res, next) => {
-  let { username, password } = req.body;
-  console.log("todo: validate username and password");
-  bcrypt.hash(password, saltRounds, (err, hash) => {
-    if (err) {
-      return next(err);
-    }
-    transaction(
-      pool,
-      (client, cb) => {
-        client.query(
-          "INSERT INTO users(email, hashed_password) VALUES ($1, $2)",
-          [username, hash],
-          cb,
-        );
-      },
-      (err, x) => {
-        if (err) {
-          return next(err);
-        }
-        console.log("user id is", x);
-        return res.redirect("/login");
-      },
-    );
-  });
+app.use(csrf());
+app.use(passport.authenticate("session"));
+app.use(function (req, res, next) {
+  var msgs = req.session.messages || [];
+  res.locals.messages = msgs;
+  res.locals.hasMessages = !!msgs.length;
+  req.session.messages = [];
+  next();
 });
+app.use(function (req, res, next) {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+app.use("/", indexRouter);
+app.use("/", authRouter);
+
 app.get("/ready", (req, res, next) => {
   pool.query("SELECT now()", (err, result) => {
     if (err) {
@@ -153,16 +69,13 @@ app.get("/ready", (req, res, next) => {
   });
 });
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
-
+// catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
 app.use(function (err, req, res, next) {
-  console.log(err);
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
