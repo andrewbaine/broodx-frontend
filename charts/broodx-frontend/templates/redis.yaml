@@ -5,3 +5,4 @@ metadata:
   labels: {{- include "chart.labels" . | nindent 4 }}
 spec:
   clusterSize: 1
+  kubernetesConfig: {}
